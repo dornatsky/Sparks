@@ -21,7 +21,7 @@ public class Panel extends SurfaceView implements SurfaceHolder.Callback {
     private Object _locker = new Object();
     private DrawingThread _thread;
     private PointF _throwStartPosition;
-    long _throwStartTime;
+    private long _throwStartTime;
     private Spark _spark;
     private long _lastRedraw = new Date().getTime();
 
