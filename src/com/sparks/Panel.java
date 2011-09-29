@@ -20,16 +20,12 @@ public class Panel extends SurfaceView implements SurfaceHolder.Callback {
 
     private Object _locker = new Object();
     private DrawingThread _thread;
-    private PointF _velocity;
-    private PointF _position;
-
-    float _x;
-    float _y;
-    long _lastCapture;
-
+    private PointF _throwStartPosition;
+    long _throwStartTime;
+    private Spark _spark;
     private long _lastRedraw = new Date().getTime();
-    private static final float CIRCLE_RADIUS = 20;
 
+    private static final float CIRCLE_RADIUS = 20;
 
     public Panel(Context context){
         super (context);
@@ -43,15 +39,12 @@ public class Panel extends SurfaceView implements SurfaceHolder.Callback {
     public void onDraw(Canvas canvas){
         canvas.drawColor(Color.WHITE);
 
-        if (_position !=null && _velocity!=null) {
+        if (_spark!=null) {
             synchronized (_locker){
                 long delta = SystemClock.uptimeMillis() - _lastRedraw;
-                PointF newPosition = new PointF(
-                        _position.x + _velocity.x * delta,
-                        _position.y + _velocity.y * delta);
+                _spark.move(delta);
 
-                canvas.drawCircle(newPosition.x, newPosition.y, CIRCLE_RADIUS, new Paint());
-                _position = newPosition;
+                canvas.drawCircle(_spark.getPosition().x, _spark.getPosition().y, CIRCLE_RADIUS, new Paint());
                 _lastRedraw = SystemClock.uptimeMillis();
             }
         }
@@ -61,33 +54,21 @@ public class Panel extends SurfaceView implements SurfaceHolder.Callback {
     public boolean  onTouchEvent(MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_DOWN){
             synchronized (_locker){
-              _x = event.getX();
-              _y = event.getY();
-              _lastCapture = SystemClock.uptimeMillis();
+              _throwStartPosition = new PointF(
+                      event.getX(),
+                      event.getY());
+              _throwStartTime = SystemClock.uptimeMillis();
             }
         } else if (event.getAction() == MotionEvent.ACTION_UP) {
              synchronized (_locker){
-                 PointF velocity = getVelocity(event);
-                 if (velocity !=null) {
-                    _position  = new PointF(event.getX(), event.getY());
-                    _velocity = velocity;
-                }
+                 _spark = new Spark(
+                        _throwStartPosition,
+                        new PointF(event.getX(), event.getY()),
+                        event.getEventTime() - _throwStartTime);
             }
         }
 
         return true;
-    }
-
-    private PointF getVelocity(MotionEvent event) {
-        if (event == null)
-            return null;
-
-        long timeDiff = SystemClock.uptimeMillis() - _lastCapture;
-        float deltaX = event.getX() - _x;
-        float deltaY = event.getY() - _y;
-
-        PointF result = new PointF(deltaX/timeDiff, deltaY/timeDiff);
-        return result;
     }
 
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
