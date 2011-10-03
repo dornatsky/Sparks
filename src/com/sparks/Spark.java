@@ -13,6 +13,7 @@ public class Spark {
 
     private PointF _velocity;
     private PointF _position;
+    private long _lastRedraw;
 
     public Spark(PointF start, PointF release, long timeDiff){
         _position = release;
@@ -29,12 +30,12 @@ public class Spark {
         return _position;
     }
 
-    public void move(long interval){
-        PointF newPosition = new PointF(
+    public void move(){
+        long interval = _lastRedraw == 0 ? 0 : SystemClock.uptimeMillis() - _lastRedraw ;
+        _lastRedraw = SystemClock.uptimeMillis();
+        _position = new PointF(
             _position.x + _velocity.x * interval,
             _position.y + _velocity.y * interval);
-
-        _position = newPosition;
     }
 
 

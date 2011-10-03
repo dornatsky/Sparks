@@ -18,12 +18,10 @@ import java.util.Date;
 
 public class Panel extends SurfaceView implements SurfaceHolder.Callback {
 
-    private Object _locker = new Object();
     private DrawingThread _thread;
     private PointF _throwStartPosition;
     private long _throwStartTime;
     private Spark _spark;
-    private long _lastRedraw = new Date().getTime();
 
     private static final float CIRCLE_RADIUS = 20;
 
@@ -40,32 +38,24 @@ public class Panel extends SurfaceView implements SurfaceHolder.Callback {
         canvas.drawColor(Color.WHITE);
 
         if (_spark!=null) {
-            synchronized (_locker){
-                long delta = SystemClock.uptimeMillis() - _lastRedraw;
-                _spark.move(delta);
-
-                canvas.drawCircle(_spark.getPosition().x, _spark.getPosition().y, CIRCLE_RADIUS, new Paint());
-                _lastRedraw = SystemClock.uptimeMillis();
-            }
+                Spark spark =_spark;
+                spark.move();
+                canvas.drawCircle(spark.getPosition().x, spark.getPosition().y, CIRCLE_RADIUS, new Paint());
         }
     }
 
     @Override
     public boolean  onTouchEvent(MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_DOWN){
-            synchronized (_locker){
               _throwStartPosition = new PointF(
                       event.getX(),
                       event.getY());
               _throwStartTime = SystemClock.uptimeMillis();
-            }
         } else if (event.getAction() == MotionEvent.ACTION_UP) {
-             synchronized (_locker){
-                 _spark = new Spark(
-                        _throwStartPosition,
-                        new PointF(event.getX(), event.getY()),
-                        event.getEventTime() - _throwStartTime);
-            }
+            _spark = new Spark(
+               _throwStartPosition,
+               new PointF(event.getX(), event.getY()),
+               event.getEventTime() - _throwStartTime);
         }
 
         return true;
