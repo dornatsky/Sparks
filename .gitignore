@@ -1,6 +1,5 @@
 # IDEA Ignores
 *.iml
-*.ipr
 *.iws
 .idea/
 local.properties
