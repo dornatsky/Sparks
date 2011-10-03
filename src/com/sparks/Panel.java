@@ -3,11 +3,12 @@ package com.sparks;
 import android.content.Context;
 import android.graphics.*;
 import android.os.SystemClock;
-import android.view.MotionEvent;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
+import android.view.*;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,29 +18,48 @@ import java.util.Date;
  */
 
 public class Panel extends SurfaceView implements SurfaceHolder.Callback {
+    private final Object _locker = new Object();
 
     private DrawingThread _thread;
     private PointF _throwStartPosition;
     private long _throwStartTime;
-    private Spark _spark;
+    private List<Spark> _sparks = new ArrayList<Spark>();
+
+    private int _width;
+    private int _height;
 
     private static final float CIRCLE_RADIUS = 20;
 
     public Panel(Context context){
-        super (context);
+        super(context);
         getHolder().addCallback(this);
         _thread = new DrawingThread(getHolder(), this);
         setFocusable(true);
+        Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        _width = display.getWidth();
+        _height = display.getHeight();
     }
 
     @Override
     public void onDraw(Canvas canvas){
         canvas.drawColor(Color.WHITE);
 
-        if (_spark!=null) {
-                Spark spark =_spark;
+        List<Spark> sparks = new ArrayList<Spark>(_sparks);
+        List<Spark> sparksToRemove = new ArrayList<Spark>();
+
+        for (Spark spark: sparks){
                 spark.move();
+
+                if (spark.getPosition().x > _width || spark.getPosition().y > _height) {
+                    sparksToRemove.add(spark);
+                }
                 canvas.drawCircle(spark.getPosition().x, spark.getPosition().y, CIRCLE_RADIUS, new Paint());
+        }
+
+        if (sparksToRemove.size()>0){
+            synchronized (_locker){
+                _sparks.removeAll(sparksToRemove);
+            }
         }
     }
 
@@ -51,10 +71,13 @@ public class Panel extends SurfaceView implements SurfaceHolder.Callback {
                       event.getY());
               _throwStartTime = SystemClock.uptimeMillis();
         } else if (event.getAction() == MotionEvent.ACTION_UP) {
-            _spark = new Spark(
+            Spark spark = new Spark(
                _throwStartPosition,
                new PointF(event.getX(), event.getY()),
                event.getEventTime() - _throwStartTime);
+            synchronized (_locker){
+            _sparks.add(spark);
+            }
         }
 
         return true;
