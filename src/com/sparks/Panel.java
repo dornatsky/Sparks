@@ -28,7 +28,6 @@ public class Panel extends SurfaceView implements SurfaceHolder.Callback {
     public Panel(Context context){
         super (context);
         getHolder().addCallback(this);
-        getHolder().addCallback(this);
         _thread = new DrawingThread(getHolder(), this);
         setFocusable(true);
     }
